@@ -1,0 +1,21 @@
+set(TARGET_NAME mdn_vector)
+
+set(TARGET_SOURCES
+    "vector.c"
+)
+
+add_library(${TARGET_NAME} STATIC
+    ${TARGET_SOURCES}
+)
+
+target_include_directories(${TARGET_NAME}
+    PUBLIC "include" ${INCLUDE_DIRECTORIES_TO_PROPAGATE}
+)
+
+target_link_libraries(${TARGET_NAME}
+    mdn_status
+    mdn_mock_wrapper
+    mdn_logger
+)
+
+cmake_language(CALL ${PROJECT_NAME}_set_target_c_compiler_flags ${TARGET_NAME})

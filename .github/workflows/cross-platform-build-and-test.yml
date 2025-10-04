@@ -1,0 +1,76 @@
+name: Cross-Platform Build and Test
+
+on: [workflow_dispatch, pull_request]
+
+jobs:
+  linux-debug-sanitized:
+    uses: ./.github/workflows/generic-jobs.yml
+    with:
+      os: ubuntu-latest
+      build_type: debug-sanitized
+
+  linux-debug-nonsanitized:
+    uses: ./.github/workflows/generic-jobs.yml
+    with:
+      os: ubuntu-latest
+      build_type: debug-nonsanitized
+
+  linux-release-sanitized:
+    uses: ./.github/workflows/generic-jobs.yml
+    with:
+      os: ubuntu-latest
+      build_type: release-sanitized
+
+  linux-release-nonsanitized:
+    uses: ./.github/workflows/generic-jobs.yml
+    with:
+      os: ubuntu-latest
+      build_type: release-nonsanitized
+
+  windows-debug-sanitized:
+    uses: ./.github/workflows/generic-jobs.yml
+    with:
+      os: windows-latest
+      build_type: debug-sanitized
+
+  windows-debug-nonsanitized:
+    uses: ./.github/workflows/generic-jobs.yml
+    with:
+      os: windows-latest
+      build_type: debug-nonsanitized
+
+  windows-release-sanitized:
+    uses: ./.github/workflows/generic-jobs.yml
+    with:
+      os: windows-latest
+      build_type: release-sanitized
+
+  windows-release-nonsanitized:
+    uses: ./.github/workflows/generic-jobs.yml
+    with:
+      os: windows-latest
+      build_type: release-nonsanitized
+
+  macos-debug-sanitized:
+    uses: ./.github/workflows/generic-jobs.yml
+    with:
+      os: macos-latest
+      build_type: debug-sanitized
+
+  macos-debug-nonsanitized:
+    uses: ./.github/workflows/generic-jobs.yml
+    with:
+      os: macos-latest
+      build_type: debug-nonsanitized
+
+  macos-release-sanitized:
+    uses: ./.github/workflows/generic-jobs.yml
+    with:
+      os: macos-latest
+      build_type: release-sanitized
+
+  macos-release-nonsanitized:
+    uses: ./.github/workflows/generic-jobs.yml
+    with:
+      os: macos-latest
+      build_type: release-nonsanitized

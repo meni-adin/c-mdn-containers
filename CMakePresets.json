@@ -1,0 +1,121 @@
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "config-common",
+            "hidden": true,
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "MDN_CONTAINERS_ENABLE_TESTS": "ON"
+            }
+        },
+        {
+            "name": "config-debug",
+            "hidden": true,
+            "inherits": ["config-common"],
+            "cacheVariables": {
+                "MDN_CONTAINERS_SAFE_MODE": "ON",
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "config-release",
+            "hidden": true,
+            "inherits": ["config-common"],
+            "cacheVariables": {
+                "MDN_CONTAINERS_SAFE_MODE": "OFF",
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "config-sanitized",
+            "hidden": true,
+            "inherits": ["config-common"],
+            "cacheVariables": {
+                "MDN_CONTAINERS_SANITIZED_BUILD": "ON"
+            }
+        },
+        {
+            "name": "config-nonsanitized",
+            "hidden": true,
+            "inherits": ["config-common"],
+            "cacheVariables": {
+                "MDN_CONTAINERS_SANITIZED_BUILD": "OFF"
+            }
+        },
+        {
+            "name": "config-debug-sanitized",
+            "inherits": ["config-debug", "config-sanitized"],
+            "description": "Debug build using safe version of the library and sanitizers enabled",
+            "binaryDir": "${sourceDir}/build/debug-sanitized"
+        },
+        {
+            "name": "config-debug-nonsanitized",
+            "inherits": ["config-debug", "config-nonsanitized"],
+            "description": "Debug build using safe version of the library and sanitizers disabled",
+            "binaryDir": "${sourceDir}/build/debug-nonsanitized"
+        },
+        {
+            "name": "config-release-sanitized",
+            "inherits": ["config-release", "config-sanitized"],
+            "description": "Release build using unsafe version of the library and sanitizers enabled",
+            "binaryDir": "${sourceDir}/build/release-sanitized"
+        },
+        {
+            "name": "config-release-nonsanitized",
+            "inherits": ["config-release", "config-nonsanitized"],
+            "description": "Release build using unsafe version of the library and sanitizers disabled",
+            "binaryDir": "${sourceDir}/build/release-nonsanitized"
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "build-debug-sanitized",
+            "configurePreset": "config-debug-sanitized"
+        },
+        {
+            "name": "build-debug-nonsanitized",
+            "configurePreset": "config-debug-nonsanitized"
+        },
+        {
+            "name": "build-release-sanitized",
+            "configurePreset": "config-release-sanitized"
+        },
+        {
+            "name": "build-release-nonsanitized",
+            "configurePreset": "config-release-nonsanitized"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "test-common",
+            "hidden": true,
+            "output": { "outputOnFailure": true },
+            "execution": { "noTestsAction": "error" },
+            "environment": {
+                "GTEST_COLOR": "1"
+            }
+        },
+        {
+            "name": "test-debug-sanitized",
+            "configurePreset": "config-debug-sanitized",
+            "inherits": ["test-common"]
+        },
+        {
+            "name": "test-debug-nonsanitized",
+            "configurePreset": "config-debug-nonsanitized",
+            "inherits": ["test-common"]
+        },
+        {
+            "name": "test-release-sanitized",
+            "configurePreset": "config-release-sanitized",
+            "inherits": ["test-common"]
+        },
+        {
+            "name": "test-release-nonsanitized",
+            "configurePreset": "config-release-nonsanitized",
+            "inherits": ["test-common"]
+        }
+    ]
+}

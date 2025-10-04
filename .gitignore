@@ -1,0 +1,8 @@
+# ignore
+__pycache__
+.DS_Store
+/_notes.md
+/.vscode
+/build
+
+# except

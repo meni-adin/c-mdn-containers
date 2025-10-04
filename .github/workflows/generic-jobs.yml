@@ -1,0 +1,36 @@
+name: Generic jobs
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+      build_type:
+        required: true
+        type: string
+
+jobs:
+  build-and-test:
+    runs-on: ${{ inputs.os }}
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+      - name: Set-up (Linux)
+        if:   runner.os == 'Linux'
+        run: |
+          sudo apt update
+          sudo apt install -y ninja-build
+          sudo apt install -y valgrind
+      - name: Set-up (Windows)
+        if:   runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      - name: Set-up (macOS)
+        if:   runner.os == 'macOS'
+        run:  |
+          brew install ninja
+      - name:  Run Python script
+        shell: bash
+        run:   python scripts/build_and_test.py -b ${{ inputs.build_type }}

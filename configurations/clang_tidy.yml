@@ -31,6 +31,7 @@ Checks: >-
   -clang-diagnostic-unsafe-buffer-usage,
   -misc-include-cleaner,
   -misc-non-private-member-variables-in-classes,
+  -modernize-macro-to-enum,
   -modernize-use-trailing-return-type,
   -modernize-use-using,
   -performance-enum-size,

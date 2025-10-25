@@ -1,7 +1,6 @@
-#include "vector.h"
-
 #include "mdn/gtest_extension.hpp"
 #include "mdn/mock_wrapper.hpp"
+#include "vector.h"
 
 using namespace testing;
 
@@ -26,8 +25,8 @@ TEST_F(VectorTest, Hello) {
     mdn_Vector_hello();
 }
 
-#ifdef MDN_LOGGER_SAFE_MODE
-#endif  // MDN_LOGGER_SAFE_MODE
+#ifdef MDN_CONTAINER_SAFE_MODE
+#endif  // MDN_CONTAINER_SAFE_MODE
 
 #ifdef MDN_MW_ENABLE_MOCKING
 #endif  // MDN_MW_ENABLE_MOCKING

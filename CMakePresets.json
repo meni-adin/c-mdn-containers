@@ -7,7 +7,8 @@
             "generator": "Ninja",
             "cacheVariables": {
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-                "MDN_CONTAINERS_ENABLE_TESTS": "ON"
+                "MDN_CONTAINERS_ENABLE_TESTS": "ON",
+                "MDN_CONTAINERS_LOGGER_COMPILE_DEFINITION": "MDN_LOGGER_SET_LEVEL_NONE"
             }
         },
         {

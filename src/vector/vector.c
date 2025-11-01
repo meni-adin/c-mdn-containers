@@ -1,4 +1,3 @@
-#define MDN_LOGGER_SET_LEVEL_DEBUG
 #include "vector.h"
 
 #include <stdbool.h>
@@ -47,7 +46,7 @@ static mdn_Status_t mdn_Vector_ensureCapacity(mdn_Vector_t *vector, size_t requi
     MDN_LOGGER_LOG_DEBUG("Reallocating: oldCapacity=%zu, newCapacity=%zu", vector->capacity, newCapacity);
 
     newSizeInBytes = newCapacity * vector->elementSize;
-    newData        = realloc(vector->data, newSizeInBytes);
+    newData        = MDN_MW_realloc(vector->data, newSizeInBytes);
     if (newData == NULL) {
         MDN_LOGGER_LOG_ERROR("Reallocation failed: requested size=%zu bytes", newSizeInBytes);
         return MDN_STATUS_ERROR_MEM_ALLOC;
@@ -74,8 +73,8 @@ mdn_Status_t mdn_Vector_new(mdn_Vector_t **vector, size_t elementSize, size_t in
     }
 #endif  // MDN_CONTAINERS_SAFE_MODE
 
-    vec  = malloc(sizeof(mdn_Vector_t));
-    data = malloc(elementSize * initialCapacity);
+    vec  = MDN_MW_malloc(sizeof(mdn_Vector_t));
+    data = MDN_MW_malloc(elementSize * initialCapacity);
 
     if ((vec == NULL) || (data == NULL)) {
         MDN_LOGGER_LOG_ERROR("Memory allocation failed: vec=%p, data=%p", (void *)vec, (void *)data);
@@ -291,7 +290,7 @@ mdn_Status_t mdn_Vector_reserve(mdn_Vector_t *vector, size_t capacity) {
     MDN_LOGGER_LOG_INFO("Reserving capacity: vector=%p, old=%zu, new=%zu",
                         (void *)vector, vector->capacity, capacity);
 
-    newData = realloc(vector->data, capacity * vector->elementSize);
+    newData = MDN_MW_realloc(vector->data, capacity * vector->elementSize);
     if (newData == NULL) {
         MDN_LOGGER_LOG_ERROR("Reallocation failed: requested capacity=%zu, size=%zu bytes",
                              capacity, capacity * vector->elementSize);
@@ -314,27 +313,28 @@ mdn_Status_t mdn_Vector_shrinkToFit(mdn_Vector_t *vector) {
     }
 #endif  // MDN_CONTAINERS_SAFE_MODE
 
+    size_t targetCapacity;
+    size_t newSizeInBytes;
+
     if (vector->size == vector->capacity) {
         MDN_LOGGER_LOG_DEBUG("Shrink not needed: size=%zu equals capacity", vector->size);
         return MDN_STATUS_SUCCESS;
     }
 
+    targetCapacity = vector->size > 0 ? vector->size : 1;
+    newSizeInBytes = targetCapacity * vector->elementSize;
+
     MDN_LOGGER_LOG_INFO("Shrinking to fit: vector=%p, old capacity=%zu, new capacity=%zu",
-                        (void *)vector, vector->capacity, vector->size);
+                        (void *)vector, vector->capacity, targetCapacity);
 
-    if (vector->size == 0) {
-        return mdn_Vector_reserve(vector, 1);
-    }
-
-    newData = realloc(vector->data, vector->size * vector->elementSize);
+    newData = MDN_MW_realloc(vector->data, newSizeInBytes);
     if (newData == NULL) {
-        MDN_LOGGER_LOG_ERROR("Reallocation failed: requested size=%zu bytes",
-                             vector->size * vector->elementSize);
+        MDN_LOGGER_LOG_ERROR("Reallocation failed: requested size=%zu bytes", newSizeInBytes);
         return MDN_STATUS_ERROR_MEM_ALLOC;
     }
 
     vector->data     = newData;
-    vector->capacity = vector->size;
-    MDN_LOGGER_LOG_DEBUG("Shrink successful: newData=%p, capacity=%zu", newData, vector->capacity);
+    vector->capacity = targetCapacity;
+    MDN_LOGGER_LOG_DEBUG("Shrink successful: newData=%p, capacity=%zu", newData, targetCapacity);
     return MDN_STATUS_SUCCESS;
 }

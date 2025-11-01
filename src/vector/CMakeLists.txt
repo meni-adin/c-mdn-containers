@@ -18,4 +18,8 @@ target_link_libraries(${TARGET_NAME}
     mdn_logger
 )
 
+target_compile_definitions(${TARGET_NAME}
+    PRIVATE ${MDN_CONTAINERS_LOGGER_COMPILE_DEFINITION}
+)
+
 cmake_language(CALL ${PROJECT_NAME}_set_target_c_compiler_flags ${TARGET_NAME})

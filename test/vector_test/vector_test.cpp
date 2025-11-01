@@ -1,3 +1,4 @@
+// NOLINTBEGIN(hicpp-vararg, hicpp-no-malloc)
 #define MDN_LOGGER_SET_LEVEL_NONE
 
 #include "mdn/gtest_extension.hpp"
@@ -763,7 +764,6 @@ TEST_F(VectorMockingTest, NewMallocFailureOnDataAllocation) {
     constexpr size_t testCapacity = 10;
 
     // Mock malloc to succeed for vector struct, fail for data array
-    // NOLINTNEXTLINE(hicpp-no-malloc)
     EXPECT_CALL(*mWMock, malloc(StrEq("mdn_Vector_new"), _))
         .WillOnce([](const char*, size_t size) { return std::malloc(size); })
         .WillOnce(Return(nullptr));
@@ -856,3 +856,4 @@ int main(int argc, char *argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
+// NOLINTEND(hicpp-vararg, hicpp-no-malloc)

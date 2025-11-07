@@ -291,8 +291,8 @@ TEST_F(VectorInsertTest, InsertAtEnd) {
 TEST_F(VectorInsertTest, InsertAtIndexEqualToSize) {
     mdn_Vector_t *vector = nullptr;
     mdn_Status_t  status;
-    size_t        size  = 0;
-    constexpr int count = 5;
+    size_t        size       = 0;
+    constexpr int count      = 5;
     constexpr int multiplier = 10;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
@@ -399,10 +399,10 @@ TEST_F(VectorCapacityTest, ReservePreventingReallocation) {
 TEST_F(VectorCapacityTest, MultipleReserveGrowthCycles) {
     mdn_Vector_t    *vector = nullptr;
     mdn_Status_t     status;
-    size_t           capacity        = 0;
-    constexpr size_t initialCapacity = 10;
-    constexpr size_t startCapacity = 20;
-    constexpr size_t maxCapacity = 100;
+    size_t           capacity          = 0;
+    constexpr size_t initialCapacity   = 10;
+    constexpr size_t startCapacity     = 20;
+    constexpr size_t maxCapacity       = 100;
     constexpr size_t capacityIncrement = 20;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), initialCapacity);
@@ -623,10 +623,10 @@ TEST_F(VectorRemoveTest, RemoveFromEnd) {
 TEST_F(VectorEdgeCasesTest, InterleavedInsertAndRemove) {
     mdn_Vector_t *vector = nullptr;
     mdn_Status_t  status;
-    constexpr int iterations = 20;
+    constexpr int iterations       = 20;
     constexpr int elementsToInsert = 3;
     constexpr int elementsToRemove = 2;
-    constexpr int multiplier = 10;
+    constexpr int multiplier       = 10;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 5);
 

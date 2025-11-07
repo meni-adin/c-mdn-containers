@@ -35,7 +35,7 @@ protected:
     }
 
     // Helper: Insert sequential integers [0, 1, 2, ..., count-1] at the end
-    void InsertSequentialInts(mdn_Vector_t *vector, size_t count) {
+    static void InsertSequentialInts(mdn_Vector_t *vector, size_t count) {
         mdn_Status_t status;
         for (size_t i = 0; i < count; ++i) {
             int element = static_cast<int>(i);
@@ -44,7 +44,7 @@ protected:
     }
 
     // Helper: Insert sequential integers starting from offset [offset, offset+1, ..., offset+count-1]
-    void InsertSequentialIntsWithOffset(mdn_Vector_t *vector, size_t count, int offset) {
+    static void InsertSequentialIntsWithOffset(mdn_Vector_t *vector, size_t count, int offset) {
         mdn_Status_t status;
         for (size_t i = 0; i < count; ++i) {
             int element = static_cast<int>(i) + offset;
@@ -53,7 +53,7 @@ protected:
     }
 
     // Helper: Verify vector contains sequential integers [0, 1, 2, ..., count-1]
-    void VerifySequentialInts(mdn_Vector_t *vector, size_t count) {
+    static void VerifySequentialInts(mdn_Vector_t *vector, size_t count) {
         mdn_Status_t status;
         for (size_t i = 0; i < count; ++i) {
             int value = -1;
@@ -63,7 +63,7 @@ protected:
     }
 
     // Helper: Verify vector contains sequential integers starting from offset
-    void VerifySequentialIntsWithOffset(mdn_Vector_t *vector, size_t count, int offset) {
+    static void VerifySequentialIntsWithOffset(mdn_Vector_t *vector, size_t count, int offset) {
         mdn_Status_t status;
         for (size_t i = 0; i < count; ++i) {
             int value = -1;
@@ -293,6 +293,7 @@ TEST_F(VectorInsertTest, InsertAtIndexEqualToSize) {
     mdn_Status_t  status;
     size_t        size  = 0;
     constexpr int count = 5;
+    constexpr int multiplier = 10;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
 
@@ -301,7 +302,7 @@ TEST_F(VectorInsertTest, InsertAtIndexEqualToSize) {
         MDN_VERIFY_SUCCESS(status, mdn_Vector_size, vector, &size);
         ASSERT_EQ(size, static_cast<size_t>(i));
 
-        int value = i * 10;
+        int value = i * multiplier;
         MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, size, &value);  // Insert at index == size
 
         MDN_VERIFY_SUCCESS(status, mdn_Vector_size, vector, &size);
@@ -312,7 +313,7 @@ TEST_F(VectorInsertTest, InsertAtIndexEqualToSize) {
     for (int i = 0; i < count; ++i) {
         int value = -1;
         MDN_VERIFY_SUCCESS(status, mdn_Vector_get, vector, static_cast<size_t>(i), &value);
-        ASSERT_EQ(value, i * 10);
+        ASSERT_EQ(value, i * multiplier);
     }
 
     mdn_Vector_delete(vector);
@@ -400,11 +401,14 @@ TEST_F(VectorCapacityTest, MultipleReserveGrowthCycles) {
     mdn_Status_t     status;
     size_t           capacity        = 0;
     constexpr size_t initialCapacity = 10;
+    constexpr size_t startCapacity = 20;
+    constexpr size_t maxCapacity = 100;
+    constexpr size_t capacityIncrement = 20;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), initialCapacity);
 
     // Multiple reserve operations with increasing capacity
-    for (size_t targetCapacity = 20; targetCapacity <= 100; targetCapacity += 20) {
+    for (size_t targetCapacity = startCapacity; targetCapacity <= maxCapacity; targetCapacity += capacityIncrement) {
         MDN_VERIFY_SUCCESS(status, mdn_Vector_reserve, vector, targetCapacity);
         MDN_VERIFY_SUCCESS(status, mdn_Vector_capacity, vector, &capacity);
         ASSERT_EQ(capacity, targetCapacity);
@@ -620,19 +624,22 @@ TEST_F(VectorEdgeCasesTest, InterleavedInsertAndRemove) {
     mdn_Vector_t *vector = nullptr;
     mdn_Status_t  status;
     constexpr int iterations = 20;
+    constexpr int elementsToInsert = 3;
+    constexpr int elementsToRemove = 2;
+    constexpr int multiplier = 10;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 5);
 
     // Interleave inserts and removes
     for (int i = 0; i < iterations; ++i) {
         // Insert 3 elements
-        for (int j = 0; j < 3; ++j) {
-            int value = i * 10 + j;
+        for (int j = 0; j < elementsToInsert; ++j) {
+            int value = (i * multiplier) + j;
             MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, 0, &value);
         }
 
         // Remove 2 elements
-        for (int j = 0; j < 2; ++j) {
+        for (int j = 0; j < elementsToRemove; ++j) {
             int removed = -1;
             MDN_VERIFY_SUCCESS(status, mdn_Vector_remove, vector, 0, &removed);
         }

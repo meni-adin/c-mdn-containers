@@ -1,23 +1,22 @@
 // NOLINTBEGIN(hicpp-vararg, hicpp-no-malloc)
 #define MDN_LOGGER_SET_LEVEL_NONE
 
-#include "mdn/gtest_extension.hpp"
-#include "mdn/mock_wrapper.hpp"
-#include "mdn/logger.h"
-#include "vector.h"
-
 #include <array>
 #include <cstdlib>
 
+#include "mdn/gtest_extension.hpp"
+#include "mdn/logger.h"
+#include "mdn/mock_wrapper.hpp"
+#include "vector.h"
+
 using namespace testing;
 
-
-#define MDN_VERIFY_SUCCESS(status, func, ...) \
-    do { \
-        status = func(__VA_ARGS__); \
-        if (status != MDN_STATUS_SUCCESS) { \
+#define MDN_VERIFY_SUCCESS(status, func, ...)                             \
+    do {                                                                  \
+        status = func(__VA_ARGS__);                                       \
+        if (status != MDN_STATUS_SUCCESS) {                               \
             FAIL() << "Function " #func " failed with status " << status; \
-        } \
+        }                                                                 \
     } while (0)
 
 // Base test fixture with common setup/teardown
@@ -34,19 +33,66 @@ protected:
         mdn_Logger_deinit();
         mWMock.reset(nullptr);
     }
+
+    // Helper: Insert sequential integers [0, 1, 2, ..., count-1] at the end
+    static void InsertSequentialInts(mdn_Vector_t *vector, size_t count) {
+        mdn_Status_t status;
+        for (size_t i = 0; i < count; ++i) {
+            int element = static_cast<int>(i);
+            MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, i, &element);
+        }
+    }
+
+    // Helper: Insert sequential integers starting from offset [offset, offset+1, ..., offset+count-1]
+    static void InsertSequentialIntsWithOffset(mdn_Vector_t *vector, size_t count, int offset) {
+        mdn_Status_t status;
+        for (size_t i = 0; i < count; ++i) {
+            int element = static_cast<int>(i) + offset;
+            MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, i, &element);
+        }
+    }
+
+    // Helper: Verify vector contains sequential integers [0, 1, 2, ..., count-1]
+    static void VerifySequentialInts(mdn_Vector_t *vector, size_t count) {
+        mdn_Status_t status;
+        for (size_t i = 0; i < count; ++i) {
+            int value = -1;
+            MDN_VERIFY_SUCCESS(status, mdn_Vector_get, vector, i, &value);
+            ASSERT_EQ(value, static_cast<int>(i));
+        }
+    }
+
+    // Helper: Verify vector contains sequential integers starting from offset
+    static void VerifySequentialIntsWithOffset(mdn_Vector_t *vector, size_t count, int offset) {
+        mdn_Status_t status;
+        for (size_t i = 0; i < count; ++i) {
+            int value = -1;
+            MDN_VERIFY_SUCCESS(status, mdn_Vector_get, vector, i, &value);
+            ASSERT_EQ(value, static_cast<int>(i) + offset);
+        }
+    }
 };
 
 // Test fixture classes
 class VectorLifecycleTest : public VectorTestBase {};
+
 class VectorInsertTest : public VectorTestBase {};
+
 class VectorRemoveTest : public VectorTestBase {};
+
 class VectorAccessTest : public VectorTestBase {};
+
 class VectorQueryTest : public VectorTestBase {};
+
 class VectorCapacityTest : public VectorTestBase {};
+
 class VectorEdgeCasesTest : public VectorTestBase {};
 #ifdef MDN_CONTAINERS_SAFE_MODE
 class VectorSafeModeTest : public VectorTestBase {};
 #endif  // MDN_CONTAINERS_SAFE_MODE
+#ifdef MDN_MW_ENABLE_MOCKING
+class VectorMockingTest : public VectorTestBase {};
+#endif  // MDN_MW_ENABLE_MOCKING
 
 // ============================================================================
 // Lifecycle Tests
@@ -54,7 +100,7 @@ class VectorSafeModeTest : public VectorTestBase {};
 
 TEST_F(VectorLifecycleTest, NewAndDelete) {
     mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
+    mdn_Status_t  status;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
     ASSERT_NE(vector, nullptr);
@@ -62,40 +108,22 @@ TEST_F(VectorLifecycleTest, NewAndDelete) {
     mdn_Vector_delete(vector);
 }
 
-TEST_F(VectorInsertTest, InsertAtEnd) {
-    mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-    const size_t elementCount = 50;
-
-    MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
-    for (size_t i = 0; i < elementCount; ++i) {
-        int element = static_cast<int>(i);
-        MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, i, &element);
-    }
-    for (size_t i = 0; i < elementCount; ++i) {
-        int value = -1;
-        MDN_VERIFY_SUCCESS(status, mdn_Vector_get, vector, i, &value);
-        ASSERT_EQ(value, i);
-    }
-    mdn_Vector_delete(vector);
-}
-
 TEST_F(VectorRemoveTest, Remove) {
     mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-    const size_t elementCount = 50;
+    mdn_Status_t  status;
+    const size_t  elementCount = 50;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), elementCount);
     for (size_t i = 0; i < elementCount; ++i) {
-        int element = static_cast<int>(i);
-        size_t size = SIZE_MAX;
+        int    element = static_cast<int>(i);
+        size_t size    = SIZE_MAX;
         MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, i, &element);
         MDN_VERIFY_SUCCESS(status, mdn_Vector_size, vector, &size);
         ASSERT_EQ(size, i + 1);
     }
     for (size_t i = 0; i < elementCount; ++i) {
-        int value = -1;
-        size_t size = SIZE_MAX;
+        int    value = -1;
+        size_t size  = SIZE_MAX;
         MDN_VERIFY_SUCCESS(status, mdn_Vector_remove, vector, 0, &value);
         ASSERT_EQ(value, static_cast<int>(i));
         MDN_VERIFY_SUCCESS(status, mdn_Vector_size, vector, &size);
@@ -106,17 +134,12 @@ TEST_F(VectorRemoveTest, Remove) {
 
 TEST_F(VectorRemoveTest, RemoveWithNullArgument) {
     mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-    const size_t elementCount = 5;
+    mdn_Status_t  status;
+    const size_t  elementCount = 5;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), elementCount);
-    for (size_t i = 0; i < elementCount; ++i) {
-        int element = static_cast<int>(i);
-        size_t size = SIZE_MAX;
-        MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, i, &element);
-        MDN_VERIFY_SUCCESS(status, mdn_Vector_size, vector, &size);
-        ASSERT_EQ(size, i + 1);
-    }
+    ASSERT_NO_FATAL_FAILURE(InsertSequentialInts(vector, elementCount));
+
     for (size_t i = 0; i < elementCount; ++i) {
         size_t size = SIZE_MAX;
         MDN_VERIFY_SUCCESS(status, mdn_Vector_remove, vector, 0, nullptr);
@@ -128,15 +151,13 @@ TEST_F(VectorRemoveTest, RemoveWithNullArgument) {
 
 TEST_F(VectorAccessTest, SetAndGet) {
     mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-    const size_t elementCount = 50;
-    constexpr int multiplier = 10;
+    mdn_Status_t  status;
+    const size_t  elementCount = 50;
+    constexpr int multiplier   = 10;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
-    for (size_t i = 0; i < elementCount; ++i) {
-        int element = static_cast<int>(i);
-        MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, i, &element);
-    }
+    ASSERT_NO_FATAL_FAILURE(InsertSequentialInts(vector, elementCount));
+
     for (size_t i = 0; i < elementCount; ++i) {
         int value = static_cast<int>(i * multiplier);
         MDN_VERIFY_SUCCESS(status, mdn_Vector_set, vector, i, &value);
@@ -151,10 +172,10 @@ TEST_F(VectorAccessTest, SetAndGet) {
 
 TEST_F(VectorQueryTest, SizeIsEmptyAndClear) {
     mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-    const size_t elementCount = 20;
-    size_t size = SIZE_MAX;
-    bool isEmpty = false;
+    mdn_Status_t  status;
+    const size_t  elementCount = 20;
+    size_t        size         = SIZE_MAX;
+    bool          isEmpty      = false;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
     MDN_VERIFY_SUCCESS(status, mdn_Vector_size, vector, &size);
@@ -162,10 +183,7 @@ TEST_F(VectorQueryTest, SizeIsEmptyAndClear) {
     MDN_VERIFY_SUCCESS(status, mdn_Vector_isEmpty, vector, &isEmpty);
     ASSERT_TRUE(isEmpty);
 
-    for (size_t i = 0; i < elementCount; ++i) {
-        int element = static_cast<int>(i);
-        MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, i, &element);
-    }
+    ASSERT_NO_FATAL_FAILURE(InsertSequentialInts(vector, elementCount));
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_size, vector, &size);
     ASSERT_EQ(size, elementCount);
@@ -184,17 +202,15 @@ TEST_F(VectorQueryTest, SizeIsEmptyAndClear) {
 
 TEST_F(VectorQueryTest, ClearPreservesCapacity) {
     mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-    size_t capacity = 0;
-    const size_t initialCapacity = 50;
-    constexpr int numElements = 30;
+    mdn_Status_t  status;
+    size_t        capacity        = 0;
+    const size_t  initialCapacity = 50;
+    constexpr int numElements     = 30;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), initialCapacity);
 
     // Add elements to fill the vector
-    for (int i = 0; i < numElements; ++i) {
-        MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, static_cast<size_t>(i), &i);
-    }
+    ASSERT_NO_FATAL_FAILURE(InsertSequentialInts(vector, numElements));
 
     // Get capacity before clear
     MDN_VERIFY_SUCCESS(status, mdn_Vector_capacity, vector, &capacity);
@@ -212,18 +228,15 @@ TEST_F(VectorQueryTest, ClearPreservesCapacity) {
 
 TEST_F(VectorQueryTest, ClearAndReuse) {
     mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-    size_t size = 0;
-    constexpr int initialCount = 5;
+    mdn_Status_t  status;
+    size_t        size          = 0;
+    constexpr int initialCount  = 5;
     constexpr int newValueStart = 100;
-    constexpr int newValueEnd = 105;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
 
     // Add initial elements
-    for (int i = 0; i < initialCount; ++i) {
-        MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, static_cast<size_t>(i), &i);
-    }
+    ASSERT_NO_FATAL_FAILURE(InsertSequentialInts(vector, initialCount));
 
     // Clear the vector
     MDN_VERIFY_SUCCESS(status, mdn_Vector_clear, vector);
@@ -231,28 +244,21 @@ TEST_F(VectorQueryTest, ClearAndReuse) {
     ASSERT_EQ(size, 0);
 
     // Reuse the vector with new elements
-    for (int i = newValueStart; i < newValueEnd; ++i) {
-        MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, static_cast<size_t>(i - newValueStart), &i);
-    }
+    ASSERT_NO_FATAL_FAILURE(InsertSequentialIntsWithOffset(vector, initialCount, newValueStart));
 
     // Verify new elements
     MDN_VERIFY_SUCCESS(status, mdn_Vector_size, vector, &size);
     ASSERT_EQ(size, initialCount);
-
-    for (int i = 0; i < initialCount; ++i) {
-        int value = -1;
-        MDN_VERIFY_SUCCESS(status, mdn_Vector_get, vector, static_cast<size_t>(i), &value);
-        ASSERT_EQ(value, i + newValueStart);
-    }
+    ASSERT_NO_FATAL_FAILURE(VerifySequentialIntsWithOffset(vector, initialCount, newValueStart));
 
     mdn_Vector_delete(vector);
 }
 
 TEST_F(VectorQueryTest, ClearEmptyVector) {
     mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-    size_t size = 0;
-    bool isEmpty = false;
+    mdn_Status_t  status;
+    size_t        size    = 0;
+    bool          isEmpty = false;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
 
@@ -271,10 +277,52 @@ TEST_F(VectorQueryTest, ClearEmptyVector) {
 // Insert Tests
 // ============================================================================
 
+TEST_F(VectorInsertTest, InsertAtEnd) {
+    mdn_Vector_t *vector = nullptr;
+    mdn_Status_t  status;
+    const size_t  elementCount = 50;
+
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
+    ASSERT_NO_FATAL_FAILURE(InsertSequentialInts(vector, elementCount));
+    ASSERT_NO_FATAL_FAILURE(VerifySequentialInts(vector, elementCount));
+    mdn_Vector_delete(vector);
+}
+
+TEST_F(VectorInsertTest, InsertAtIndexEqualToSize) {
+    mdn_Vector_t *vector = nullptr;
+    mdn_Status_t  status;
+    size_t        size       = 0;
+    constexpr int count      = 5;
+    constexpr int multiplier = 10;
+
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
+
+    // Insert at index == size is valid (appending)
+    for (int i = 0; i < count; ++i) {
+        MDN_VERIFY_SUCCESS(status, mdn_Vector_size, vector, &size);
+        ASSERT_EQ(size, static_cast<size_t>(i));
+
+        int value = i * multiplier;
+        MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, size, &value);  // Insert at index == size
+
+        MDN_VERIFY_SUCCESS(status, mdn_Vector_size, vector, &size);
+        ASSERT_EQ(size, static_cast<size_t>(i + 1));
+    }
+
+    // Verify all elements
+    for (int i = 0; i < count; ++i) {
+        int value = -1;
+        MDN_VERIFY_SUCCESS(status, mdn_Vector_get, vector, static_cast<size_t>(i), &value);
+        ASSERT_EQ(value, i * multiplier);
+    }
+
+    mdn_Vector_delete(vector);
+}
+
 TEST_F(VectorInsertTest, InsertAtBeginning) {
     mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-    const size_t elementCount = 20;
+    mdn_Status_t  status;
+    const size_t  elementCount = 20;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
 
@@ -295,18 +343,16 @@ TEST_F(VectorInsertTest, InsertAtBeginning) {
 }
 
 TEST_F(VectorInsertTest, InsertAtMiddle) {
-    mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-    constexpr int initialCount = 5;
-    constexpr int middleValue = 99;
+    mdn_Vector_t    *vector = nullptr;
+    mdn_Status_t     status;
+    constexpr int    initialCount = 5;
+    constexpr int    middleValue  = 99;
     constexpr size_t expectedSize = 6;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
 
     // Insert initial elements: [0, 1, 2, 3, 4]
-    for (int i = 0; i < initialCount; ++i) {
-        MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, static_cast<size_t>(i), &i);
-    }
+    ASSERT_NO_FATAL_FAILURE(InsertSequentialInts(vector, initialCount));
 
     // Insert in middle at index 2: [0, 1, 99, 2, 3, 4]
     int middleVal = middleValue;
@@ -323,11 +369,59 @@ TEST_F(VectorInsertTest, InsertAtMiddle) {
     mdn_Vector_delete(vector);
 }
 
+TEST_F(VectorCapacityTest, ReservePreventingReallocation) {
+    mdn_Vector_t    *vector = nullptr;
+    mdn_Status_t     status;
+    size_t           capacity        = 0;
+    constexpr size_t reserveCapacity = 100;
+    constexpr int    elementCount    = 50;
+
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
+
+    // Reserve large capacity
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_reserve, vector, reserveCapacity);
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_capacity, vector, &capacity);
+    ASSERT_EQ(capacity, reserveCapacity);
+
+    // Insert many elements - should not trigger reallocation
+    ASSERT_NO_FATAL_FAILURE(InsertSequentialInts(vector, elementCount));
+
+    // Capacity should remain the same (no reallocation happened)
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_capacity, vector, &capacity);
+    ASSERT_EQ(capacity, reserveCapacity);
+
+    // Verify elements are correct
+    ASSERT_NO_FATAL_FAILURE(VerifySequentialInts(vector, elementCount));
+
+    mdn_Vector_delete(vector);
+}
+
+TEST_F(VectorCapacityTest, MultipleReserveGrowthCycles) {
+    mdn_Vector_t    *vector = nullptr;
+    mdn_Status_t     status;
+    size_t           capacity          = 0;
+    constexpr size_t initialCapacity   = 10;
+    constexpr size_t startCapacity     = 20;
+    constexpr size_t maxCapacity       = 100;
+    constexpr size_t capacityIncrement = 20;
+
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), initialCapacity);
+
+    // Multiple reserve operations with increasing capacity
+    for (size_t targetCapacity = startCapacity; targetCapacity <= maxCapacity; targetCapacity += capacityIncrement) {
+        MDN_VERIFY_SUCCESS(status, mdn_Vector_reserve, vector, targetCapacity);
+        MDN_VERIFY_SUCCESS(status, mdn_Vector_capacity, vector, &capacity);
+        ASSERT_EQ(capacity, targetCapacity);
+    }
+
+    mdn_Vector_delete(vector);
+}
+
 TEST_F(VectorCapacityTest, CapacityAndReserve) {
     mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-    size_t capacity = 0;
-    const size_t initialCapacity = 10;
+    mdn_Status_t  status;
+    size_t        capacity        = 0;
+    const size_t  initialCapacity = 10;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), initialCapacity);
 
@@ -351,19 +445,16 @@ TEST_F(VectorCapacityTest, CapacityAndReserve) {
 
 TEST_F(VectorCapacityTest, CapacityGrowth) {
     mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-    const size_t initialCapacity = 4;
-    size_t capacity = 0;
+    mdn_Status_t  status;
+    const size_t  initialCapacity = 4;
+    size_t        capacity        = 0;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), initialCapacity);
     MDN_VERIFY_SUCCESS(status, mdn_Vector_capacity, vector, &capacity);
     ASSERT_EQ(capacity, initialCapacity);
 
     // Insert enough elements to trigger growth (capacity should double)
-    for (size_t i = 0; i < initialCapacity + 1; ++i) {
-        int element = static_cast<int>(i);
-        MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, i, &element);
-    }
+    ASSERT_NO_FATAL_FAILURE(InsertSequentialInts(vector, initialCapacity + 1));
 
     // Capacity should have grown (at least doubled)
     MDN_VERIFY_SUCCESS(status, mdn_Vector_capacity, vector, &capacity);
@@ -373,19 +464,17 @@ TEST_F(VectorCapacityTest, CapacityGrowth) {
 }
 
 TEST_F(VectorCapacityTest, ShrinkToFit) {
-    mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-    size_t capacity = 0;
-    size_t size = 0;
+    mdn_Vector_t    *vector = nullptr;
+    mdn_Status_t     status;
+    size_t           capacity        = 0;
+    size_t           size            = 0;
     constexpr size_t initialCapacity = 50;
-    constexpr int elementCount = 10;
+    constexpr int    elementCount    = 10;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), initialCapacity);
 
     // Add only 10 elements
-    for (int i = 0; i < elementCount; ++i) {
-        MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, static_cast<size_t>(i), &i);
-    }
+    ASSERT_NO_FATAL_FAILURE(InsertSequentialInts(vector, elementCount));
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_capacity, vector, &capacity);
     ASSERT_EQ(capacity, initialCapacity);
@@ -399,19 +488,15 @@ TEST_F(VectorCapacityTest, ShrinkToFit) {
     ASSERT_EQ(capacity, elementCount);
 
     // Verify elements are still intact
-    for (int i = 0; i < elementCount; ++i) {
-        int value = -1;
-        MDN_VERIFY_SUCCESS(status, mdn_Vector_get, vector, static_cast<size_t>(i), &value);
-        ASSERT_EQ(value, i);
-    }
+    ASSERT_NO_FATAL_FAILURE(VerifySequentialInts(vector, elementCount));
 
     mdn_Vector_delete(vector);
 }
 
 TEST_F(VectorCapacityTest, ShrinkToFitEmptyVector) {
     mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-    size_t capacity = 0;
+    mdn_Status_t  status;
+    size_t        capacity = 0;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 50);
 
@@ -425,18 +510,16 @@ TEST_F(VectorCapacityTest, ShrinkToFitEmptyVector) {
 }
 
 TEST_F(VectorCapacityTest, ShrinkToFitWhenSizeEqualsCapacity) {
-    mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-    size_t capacity = 0;
-    size_t size = 0;
+    mdn_Vector_t    *vector = nullptr;
+    mdn_Status_t     status;
+    size_t           capacity       = 0;
+    size_t           size           = 0;
     constexpr size_t vectorCapacity = 10;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), vectorCapacity);
 
     // Fill vector to exact capacity
-    for (int i = 0; i < static_cast<int>(vectorCapacity); ++i) {
-        MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, static_cast<size_t>(i), &i);
-    }
+    ASSERT_NO_FATAL_FAILURE(InsertSequentialInts(vector, vectorCapacity));
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_size, vector, &size);
     MDN_VERIFY_SUCCESS(status, mdn_Vector_capacity, vector, &capacity);
@@ -457,17 +540,15 @@ TEST_F(VectorCapacityTest, ShrinkToFitWhenSizeEqualsCapacity) {
 // ============================================================================
 
 TEST_F(VectorRemoveTest, RemoveFromMiddle) {
-    mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-    constexpr int initialCount = 5;
+    mdn_Vector_t    *vector = nullptr;
+    mdn_Status_t     status;
+    constexpr int    initialCount = 5;
     constexpr size_t expectedSize = 4;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
 
     // Insert elements: [0, 1, 2, 3, 4]
-    for (int i = 0; i < initialCount; ++i) {
-        MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, static_cast<size_t>(i), &i);
-    }
+    ASSERT_NO_FATAL_FAILURE(InsertSequentialInts(vector, initialCount));
 
     // Remove middle element at index 2 (value 2)
     int removed = -1;
@@ -485,15 +566,164 @@ TEST_F(VectorRemoveTest, RemoveFromMiddle) {
     mdn_Vector_delete(vector);
 }
 
+TEST_F(VectorRemoveTest, RemoveFromBeginning) {
+    mdn_Vector_t *vector = nullptr;
+    mdn_Status_t  status;
+    constexpr int initialCount = 10;
+
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
+    ASSERT_NO_FATAL_FAILURE(InsertSequentialInts(vector, initialCount));
+
+    // Remove from beginning repeatedly
+    for (int i = 0; i < initialCount; ++i) {
+        int removed = -1;
+        MDN_VERIFY_SUCCESS(status, mdn_Vector_remove, vector, 0, &removed);
+        ASSERT_EQ(removed, i);
+
+        size_t size = SIZE_MAX;
+        MDN_VERIFY_SUCCESS(status, mdn_Vector_size, vector, &size);
+        ASSERT_EQ(size, static_cast<size_t>(initialCount - i - 1));
+    }
+
+    // Vector should be empty
+    size_t size = SIZE_MAX;
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_size, vector, &size);
+    ASSERT_EQ(size, 0);
+
+    mdn_Vector_delete(vector);
+}
+
+TEST_F(VectorRemoveTest, RemoveFromEnd) {
+    mdn_Vector_t *vector = nullptr;
+    mdn_Status_t  status;
+    constexpr int initialCount = 10;
+
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
+    ASSERT_NO_FATAL_FAILURE(InsertSequentialInts(vector, initialCount));
+
+    // Remove from end repeatedly
+    for (int i = initialCount - 1; i >= 0; --i) {
+        int removed = -1;
+        MDN_VERIFY_SUCCESS(status, mdn_Vector_remove, vector, static_cast<size_t>(i), &removed);
+        ASSERT_EQ(removed, i);
+
+        size_t size = SIZE_MAX;
+        MDN_VERIFY_SUCCESS(status, mdn_Vector_size, vector, &size);
+        ASSERT_EQ(size, static_cast<size_t>(i));
+    }
+
+    // Vector should be empty
+    size_t size = SIZE_MAX;
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_size, vector, &size);
+    ASSERT_EQ(size, 0);
+
+    mdn_Vector_delete(vector);
+}
+
+TEST_F(VectorEdgeCasesTest, InterleavedInsertAndRemove) {
+    mdn_Vector_t *vector = nullptr;
+    mdn_Status_t  status;
+    constexpr int iterations       = 20;
+    constexpr int elementsToInsert = 3;
+    constexpr int elementsToRemove = 2;
+    constexpr int multiplier       = 10;
+
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 5);
+
+    // Interleave inserts and removes
+    for (int i = 0; i < iterations; ++i) {
+        // Insert 3 elements
+        for (int j = 0; j < elementsToInsert; ++j) {
+            int value = (i * multiplier) + j;
+            MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, 0, &value);
+        }
+
+        // Remove 2 elements
+        for (int j = 0; j < elementsToRemove; ++j) {
+            int removed = -1;
+            MDN_VERIFY_SUCCESS(status, mdn_Vector_remove, vector, 0, &removed);
+        }
+    }
+
+    // Should have net gain of 1 element per iteration
+    size_t size = SIZE_MAX;
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_size, vector, &size);
+    ASSERT_EQ(size, iterations);
+
+    mdn_Vector_delete(vector);
+}
+
+TEST_F(VectorEdgeCasesTest, ClearAndRefillMultipleTimes) {
+    mdn_Vector_t *vector = nullptr;
+    mdn_Status_t  status;
+    constexpr int cycles           = 5;
+    constexpr int elementsPerCycle = 10;
+
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 5);
+
+    for (int cycle = 0; cycle < cycles; ++cycle) {
+        // Fill with elements
+        ASSERT_NO_FATAL_FAILURE(InsertSequentialIntsWithOffset(vector, elementsPerCycle, cycle * 100));
+
+        // Verify
+        size_t size = SIZE_MAX;
+        MDN_VERIFY_SUCCESS(status, mdn_Vector_size, vector, &size);
+        ASSERT_EQ(size, elementsPerCycle);
+
+        ASSERT_NO_FATAL_FAILURE(VerifySequentialIntsWithOffset(vector, elementsPerCycle, cycle * 100));
+
+        // Clear for next cycle
+        MDN_VERIFY_SUCCESS(status, mdn_Vector_clear, vector);
+    }
+
+    mdn_Vector_delete(vector);
+}
+
+TEST_F(VectorEdgeCasesTest, SingleElementOperations) {
+    mdn_Vector_t *vector = nullptr;
+    mdn_Status_t  status;
+    constexpr int testValue = 42;
+    size_t        size      = SIZE_MAX;
+
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 1);
+
+    // Insert single element
+    int value = testValue;
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, 0, &value);
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_size, vector, &size);
+    ASSERT_EQ(size, 1);
+
+    // Get single element
+    int retrieved = -1;
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_get, vector, 0, &retrieved);
+    ASSERT_EQ(retrieved, testValue);
+
+    // Set single element
+    int newValue = testValue * 2;
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_set, vector, 0, &newValue);
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_get, vector, 0, &retrieved);
+    ASSERT_EQ(retrieved, newValue);
+
+    // Remove single element
+    int removed = -1;
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_remove, vector, 0, &removed);
+    ASSERT_EQ(removed, newValue);
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_size, vector, &size);
+    ASSERT_EQ(size, 0);
+
+    mdn_Vector_delete(vector);
+}
+
 TEST_F(VectorEdgeCasesTest, LargeElementSize) {
     constexpr size_t dataSize = 256;
+
     struct LargeStruct {
         std::array<char, dataSize> data;
-        int id;
+        int                        id;
     };
 
     mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
+    mdn_Status_t  status;
     constexpr int elementCount = 5;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(LargeStruct), 10);
@@ -520,216 +750,224 @@ TEST_F(VectorEdgeCasesTest, LargeElementSize) {
 }
 
 #ifdef MDN_CONTAINERS_SAFE_MODE
-TEST_F(VectorSafeModeTest, NewWithNullPointer) {
-    mdn_Status_t status;
+TEST_F(VectorSafeModeTest, NewInvalidArguments) {
+    mdn_Vector_t    *vector = nullptr;
+    mdn_Status_t     status;
     constexpr size_t testCapacity = 10;
 
+    // Null pointer
     status = mdn_Vector_new(nullptr, sizeof(int), testCapacity);
     ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
-}
 
-TEST_F(VectorSafeModeTest, NewWithZeroElementSize) {
-    mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-    constexpr size_t testCapacity = 10;
-
+    // Zero element size
     status = mdn_Vector_new(&vector, 0, testCapacity);
     ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
-}
 
-TEST_F(VectorSafeModeTest, NewWithZeroCapacity) {
-    mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-
+    // Zero capacity
     status = mdn_Vector_new(&vector, sizeof(int), 0);
     ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
 }
 
-TEST_F(VectorSafeModeTest, GetWithNullVector) {
-    mdn_Status_t status;
-    int value;
+TEST_F(VectorSafeModeTest, GetInvalidArguments) {
+    mdn_Vector_t *vector = nullptr;
+    mdn_Status_t  status;
+    int           value;
+    constexpr int testValue = 42;
 
+    // Null vector
     status = mdn_Vector_get(nullptr, 0, &value);
     ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
-}
-
-TEST_F(VectorSafeModeTest, GetWithNullElement) {
-    mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-    constexpr int testValue = 42;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
-    int value = testValue;
-    MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, 0, &value);
-
-    status = mdn_Vector_get(vector, 0, nullptr);
-    ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
-
-    mdn_Vector_delete(vector);
-}
-
-TEST_F(VectorSafeModeTest, GetOutOfBounds) {
-    mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-    int value;
-    constexpr int testValue = 42;
-
-    MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
-
-    // Try to get from empty vector
-    status = mdn_Vector_get(vector, 0, &value);
-    ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
-
-    // Add one element
     int element = testValue;
     MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, 0, &element);
 
-    // Try to get beyond size
+    // Null element pointer
+    status = mdn_Vector_get(vector, 0, nullptr);
+    ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
+
+    // Clear vector for out of bounds tests
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_clear, vector);
+
+    // Out of bounds - empty vector
+    status = mdn_Vector_get(vector, 0, &value);
+    ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
+
+    // Add one element and try to get beyond size
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, 0, &element);
     status = mdn_Vector_get(vector, 1, &value);
     ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
 
     mdn_Vector_delete(vector);
 }
 
-TEST_F(VectorSafeModeTest, SetOutOfBounds) {
+TEST_F(VectorSafeModeTest, SetInvalidArguments) {
     mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
+    mdn_Status_t  status;
     constexpr int testValue = 42;
-    int value = testValue;
+    int           value     = testValue;
+
+    // Null vector
+    status = mdn_Vector_set(nullptr, 0, &value);
+    ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, 0, &value);
 
-    // Try to set in empty vector
+    // Null element pointer
+    status = mdn_Vector_set(vector, 0, nullptr);
+    ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
+
+    // Out of bounds - empty vector
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_clear, vector);
     status = mdn_Vector_set(vector, 0, &value);
     ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
 
+    // Out of bounds - beyond size
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, 0, &value);
+    status = mdn_Vector_set(vector, 1, &value);
+    ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
+
     mdn_Vector_delete(vector);
 }
 
-TEST_F(VectorSafeModeTest, InsertWithNullVector) {
-    mdn_Status_t status;
+TEST_F(VectorSafeModeTest, InsertInvalidArguments) {
+    mdn_Vector_t *vector = nullptr;
+    mdn_Status_t  status;
     constexpr int testValue = 42;
-    int value = testValue;
+    int           value     = testValue;
 
+    // Null vector
     status = mdn_Vector_insert(nullptr, 0, &value);
     ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
-}
-
-TEST_F(VectorSafeModeTest, InsertWithNullElement) {
-    mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
 
+    // Null element pointer
     status = mdn_Vector_insert(vector, 0, nullptr);
     ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
 
-    mdn_Vector_delete(vector);
-}
-
-TEST_F(VectorSafeModeTest, InsertBeyondSize) {
-    mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-    constexpr int testValue = 42;
-    int value = testValue;
-
-    MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
-
-    // Inserting at index > size is invalid
+    // Index beyond size (inserting at index > size is invalid)
     status = mdn_Vector_insert(vector, 1, &value);
     ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
 
+    // Verify inserting at index == size is valid
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, 0, &value);
+
     mdn_Vector_delete(vector);
 }
 
-TEST_F(VectorSafeModeTest, RemoveWithNullVector) {
-    mdn_Status_t status;
-    int value;
+TEST_F(VectorSafeModeTest, RemoveInvalidArguments) {
+    mdn_Vector_t *vector = nullptr;
+    mdn_Status_t  status;
+    int           value;
+    constexpr int testValue = 42;
 
+    // Null vector
     status = mdn_Vector_remove(nullptr, 0, &value);
     ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
-}
-
-TEST_F(VectorSafeModeTest, RemoveOutOfBounds) {
-    mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-    int value;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
 
-    // Try to remove from empty vector
+    // Out of bounds - empty vector
     status = mdn_Vector_remove(vector, 0, &value);
     ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
 
+    // Out of bounds - beyond size
+    int element = testValue;
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, 0, &element);
+    status = mdn_Vector_remove(vector, 1, &value);
+    ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
+
+    // Note: element pointer can be NULL (tested in RemoveWithNullArgument)
+
     mdn_Vector_delete(vector);
 }
 
-TEST_F(VectorSafeModeTest, SizeWithNullVector) {
-    mdn_Status_t status;
-    size_t size;
+TEST_F(VectorSafeModeTest, SizeInvalidArguments) {
+    mdn_Vector_t *vector = nullptr;
+    mdn_Status_t  status;
+    size_t        size;
 
+    // Null vector
     status = mdn_Vector_size(nullptr, &size);
     ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
-}
-
-TEST_F(VectorSafeModeTest, SizeWithNullOutput) {
-    mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
 
+    // Null output pointer
     status = mdn_Vector_size(vector, nullptr);
     ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
 
     mdn_Vector_delete(vector);
 }
 
-TEST_F(VectorSafeModeTest, CapacityWithNullVector) {
-    mdn_Status_t status;
-    size_t capacity;
+TEST_F(VectorSafeModeTest, CapacityInvalidArguments) {
+    mdn_Vector_t *vector = nullptr;
+    mdn_Status_t  status;
+    size_t        capacity;
 
+    // Null vector
     status = mdn_Vector_capacity(nullptr, &capacity);
     ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
+
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
+
+    // Null output pointer
+    status = mdn_Vector_capacity(vector, nullptr);
+    ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
+
+    mdn_Vector_delete(vector);
 }
 
-TEST_F(VectorSafeModeTest, IsEmptyWithNullVector) {
-    mdn_Status_t status;
-    bool isEmpty;
+TEST_F(VectorSafeModeTest, IsEmptyInvalidArguments) {
+    mdn_Vector_t *vector = nullptr;
+    mdn_Status_t  status;
+    bool          isEmpty;
 
+    // Null vector
     status = mdn_Vector_isEmpty(nullptr, &isEmpty);
     ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
+
+    MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
+
+    // Null output pointer
+    status = mdn_Vector_isEmpty(vector, nullptr);
+    ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
+
+    mdn_Vector_delete(vector);
 }
 
-TEST_F(VectorSafeModeTest, ClearWithNullVector) {
+TEST_F(VectorSafeModeTest, ClearInvalidArguments) {
     mdn_Status_t status;
 
+    // Null vector
     status = mdn_Vector_clear(nullptr);
     ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
 }
 
-TEST_F(VectorSafeModeTest, ReserveWithNullVector) {
-    mdn_Status_t status;
+TEST_F(VectorSafeModeTest, ReserveInvalidArguments) {
+    mdn_Vector_t    *vector = nullptr;
+    mdn_Status_t     status;
     constexpr size_t testCapacity = 100;
 
+    // Null vector
     status = mdn_Vector_reserve(nullptr, testCapacity);
     ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
-}
-
-TEST_F(VectorSafeModeTest, ReserveWithZeroCapacity) {
-    mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 10);
 
+    // Zero capacity
     status = mdn_Vector_reserve(vector, 0);
     ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
 
     mdn_Vector_delete(vector);
 }
 
-TEST_F(VectorSafeModeTest, ShrinkToFitWithNullVector) {
+TEST_F(VectorSafeModeTest, ShrinkToFitInvalidArguments) {
     mdn_Status_t status;
 
+    // Null vector
     status = mdn_Vector_shrinkToFit(nullptr);
     ASSERT_EQ(status, MDN_STATUS_ERROR_BAD_ARGUMENT);
 }
@@ -739,11 +977,10 @@ TEST_F(VectorSafeModeTest, ShrinkToFitWithNullVector) {
 // ============================================================================
 // Memory Allocation Failure Tests
 // ============================================================================
-class VectorMockingTest : public VectorTestBase {};
 
 TEST_F(VectorMockingTest, NewMallocFailureOnVectorAllocation) {
-    mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
+    mdn_Vector_t    *vector = nullptr;
+    mdn_Status_t     status;
     constexpr size_t testCapacity = 10;
 
     // Mock only the first malloc to fail, let the second one use the fallback (real malloc)
@@ -759,13 +996,13 @@ TEST_F(VectorMockingTest, NewMallocFailureOnVectorAllocation) {
 }
 
 TEST_F(VectorMockingTest, NewMallocFailureOnDataAllocation) {
-    mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
+    mdn_Vector_t    *vector = nullptr;
+    mdn_Status_t     status;
     constexpr size_t testCapacity = 10;
 
     // Mock malloc to succeed for vector struct, fail for data array
     EXPECT_CALL(*mWMock, malloc(StrEq("mdn_Vector_new"), _))
-        .WillOnce([](const char*, size_t size) { return std::malloc(size); })
+        .WillOnce([](const char *, size_t size) { return std::malloc(size); })
         .WillOnce(Return(nullptr));
 
     status = mdn_Vector_new(&vector, sizeof(int), testCapacity);
@@ -776,7 +1013,7 @@ TEST_F(VectorMockingTest, NewMallocFailureOnDataAllocation) {
 
 TEST_F(VectorMockingTest, InsertReallocFailure) {
     mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
+    mdn_Status_t  status;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), 2);
 
@@ -791,7 +1028,7 @@ TEST_F(VectorMockingTest, InsertReallocFailure) {
         .WillOnce(Return(nullptr));
 
     int value3 = 3;
-    status = mdn_Vector_insert(vector, 2, &value3);
+    status     = mdn_Vector_insert(vector, 2, &value3);
 
     ASSERT_EQ(status, MDN_STATUS_ERROR_MEM_ALLOC);
 
@@ -799,11 +1036,11 @@ TEST_F(VectorMockingTest, InsertReallocFailure) {
 }
 
 TEST_F(VectorMockingTest, ReserveReallocFailure) {
-    mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-    size_t capacity = 0;
+    mdn_Vector_t    *vector = nullptr;
+    mdn_Status_t     status;
+    size_t           capacity        = 0;
     constexpr size_t initialCapacity = 10;
-    constexpr size_t newCapacity = 50;
+    constexpr size_t newCapacity     = 50;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), initialCapacity);
 
@@ -823,18 +1060,16 @@ TEST_F(VectorMockingTest, ReserveReallocFailure) {
 }
 
 TEST_F(VectorMockingTest, ShrinkToFitReallocFailure) {
-    mdn_Vector_t *vector = nullptr;
-    mdn_Status_t status;
-    size_t capacity = 0;
+    mdn_Vector_t    *vector = nullptr;
+    mdn_Status_t     status;
+    size_t           capacity        = 0;
     constexpr size_t initialCapacity = 50;
-    constexpr int elementCount = 10;
+    constexpr int    elementCount    = 10;
 
     MDN_VERIFY_SUCCESS(status, mdn_Vector_new, &vector, sizeof(int), initialCapacity);
 
     // Add only 10 elements
-    for (int i = 0; i < elementCount; ++i) {
-        MDN_VERIFY_SUCCESS(status, mdn_Vector_insert, vector, static_cast<size_t>(i), &i);
-    }
+    ASSERT_NO_FATAL_FAILURE(InsertSequentialInts(vector, elementCount));
 
     // Mock realloc to fail when trying to shrink
     EXPECT_CALL(*mWMock, realloc(StrEq("mdn_Vector_shrinkToFit"), _, _))
@@ -856,4 +1091,5 @@ int main(int argc, char *argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
+
 // NOLINTEND(hicpp-vararg, hicpp-no-malloc)

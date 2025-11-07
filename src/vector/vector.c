@@ -15,7 +15,7 @@ struct mdn_Vector_t_ {
     size_t elementSize;
 };
 
-#define MDN_VECTOR_GROWTH_FACTOR    2
+#define MDN_VECTOR_GROWTH_FACTOR 2
 
 static void *mdn_Vector_getElementPtr(const mdn_Vector_t *vector, size_t index) {
     void *ptr;
@@ -31,7 +31,9 @@ static mdn_Status_t mdn_Vector_ensureCapacity(mdn_Vector_t *vector, size_t requi
     size_t newSizeInBytes;
 
     MDN_LOGGER_LOG_DEBUG("Ensuring capacity: vector=%p, current=%zu, required=%zu",
-                         (void *)vector, vector->capacity, requiredCapacity);
+                         (void *)vector,
+                         vector->capacity,
+                         requiredCapacity);
 
     if (vector->capacity >= requiredCapacity) {
         MDN_LOGGER_LOG_DEBUG("Capacity sufficient, no reallocation needed");
@@ -68,7 +70,9 @@ mdn_Status_t mdn_Vector_new(mdn_Vector_t **vector, size_t elementSize, size_t in
 #ifdef MDN_CONTAINERS_SAFE_MODE
     if ((vector == NULL) || (elementSize == 0) || (initialCapacity == 0)) {
         MDN_LOGGER_LOG_ERROR("Invalid arguments: vector=%p, elementSize=%zu, initialCapacity=%zu",
-                             (void *)vector, elementSize, initialCapacity);
+                             (void *)vector,
+                             elementSize,
+                             initialCapacity);
         return MDN_STATUS_ERROR_BAD_ARGUMENT;
     }
 #endif  // MDN_CONTAINERS_SAFE_MODE
@@ -115,13 +119,18 @@ mdn_Status_t mdn_Vector_get(mdn_Vector_t *vector, size_t index, void *element) {
 #ifdef MDN_CONTAINERS_SAFE_MODE
     if ((vector == NULL) || (element == NULL) || (index >= vector->size)) {
         MDN_LOGGER_LOG_ERROR("Invalid arguments: vector=%p, element=%p, index=%zu, size=%zu",
-                             (void *)vector, element, index, vector ? vector->size : 0);
+                             (void *)vector,
+                             element,
+                             index,
+                             vector ? vector->size : 0);
         return MDN_STATUS_ERROR_BAD_ARGUMENT;
     }
 #endif  // MDN_CONTAINERS_SAFE_MODE
 
     MDN_LOGGER_LOG_DEBUG("Getting element: vector=%p, index=%zu, elementSize=%zu",
-                         (void *)vector, index, vector->elementSize);
+                         (void *)vector,
+                         index,
+                         vector->elementSize);
 
     src = mdn_Vector_getElementPtr(vector, index);
     memcpy(element, src, vector->elementSize);
@@ -135,13 +144,18 @@ mdn_Status_t mdn_Vector_set(mdn_Vector_t *vector, size_t index, const void *elem
 #ifdef MDN_CONTAINERS_SAFE_MODE
     if ((vector == NULL) || (element == NULL) || (index >= vector->size)) {
         MDN_LOGGER_LOG_ERROR("Invalid arguments: vector=%p, element=%p, index=%zu, size=%zu",
-                             (void *)vector, element, index, vector ? vector->size : 0);
+                             (void *)vector,
+                             element,
+                             index,
+                             vector ? vector->size : 0);
         return MDN_STATUS_ERROR_BAD_ARGUMENT;
     }
 #endif  // MDN_CONTAINERS_SAFE_MODE
 
     MDN_LOGGER_LOG_DEBUG("Setting element: vector=%p, index=%zu, elementSize=%zu",
-                         (void *)vector, index, vector->elementSize);
+                         (void *)vector,
+                         index,
+                         vector->elementSize);
 
     dest = mdn_Vector_getElementPtr(vector, index);
     memcpy(dest, element, vector->elementSize);
@@ -159,13 +173,19 @@ mdn_Status_t mdn_Vector_insert(mdn_Vector_t *vector, size_t index, const void *e
 #ifdef MDN_CONTAINERS_SAFE_MODE
     if ((vector == NULL) || (element == NULL) || (index > vector->size)) {
         MDN_LOGGER_LOG_ERROR("Invalid arguments: vector=%p, element=%p, index=%zu, size=%zu",
-                             (void *)vector, element, index, vector ? vector->size : 0);
+                             (void *)vector,
+                             element,
+                             index,
+                             vector ? vector->size : 0);
         return MDN_STATUS_ERROR_BAD_ARGUMENT;
     }
 #endif  // MDN_CONTAINERS_SAFE_MODE
 
     MDN_LOGGER_LOG_INFO("Inserting element: vector=%p, index=%zu, size=%zu, capacity=%zu",
-                        (void *)vector, index, vector->size, vector->capacity);
+                        (void *)vector,
+                        index,
+                        vector->size,
+                        vector->capacity);
 
     status = mdn_Vector_ensureCapacity(vector, vector->size + 1);
     if (status != MDN_STATUS_SUCCESS) {
@@ -197,13 +217,18 @@ mdn_Status_t mdn_Vector_remove(mdn_Vector_t *vector, size_t index, void *element
 #ifdef MDN_CONTAINERS_SAFE_MODE
     if ((vector == NULL) || (index >= vector->size)) {
         MDN_LOGGER_LOG_ERROR("Invalid arguments: vector=%p, index=%zu, size=%zu",
-                             (void *)vector, index, vector ? vector->size : 0);
+                             (void *)vector,
+                             index,
+                             vector ? vector->size : 0);
         return MDN_STATUS_ERROR_BAD_ARGUMENT;
     }
 #endif  // MDN_CONTAINERS_SAFE_MODE
 
     MDN_LOGGER_LOG_INFO("Removing element: vector=%p, index=%zu, size=%zu, outputElement=%s",
-                        (void *)vector, index, vector->size, element != NULL ? "yes" : "no");
+                        (void *)vector,
+                        index,
+                        vector->size,
+                        element != NULL ? "yes" : "no");
 
     if (element != NULL) {
         src = mdn_Vector_getElementPtr(vector, index);
@@ -288,12 +313,15 @@ mdn_Status_t mdn_Vector_reserve(mdn_Vector_t *vector, size_t capacity) {
     }
 
     MDN_LOGGER_LOG_INFO("Reserving capacity: vector=%p, old=%zu, new=%zu",
-                        (void *)vector, vector->capacity, capacity);
+                        (void *)vector,
+                        vector->capacity,
+                        capacity);
 
     newData = MDN_MW_realloc(vector->data, capacity * vector->elementSize);
     if (newData == NULL) {
         MDN_LOGGER_LOG_ERROR("Reallocation failed: requested capacity=%zu, size=%zu bytes",
-                             capacity, capacity * vector->elementSize);
+                             capacity,
+                             capacity * vector->elementSize);
         return MDN_STATUS_ERROR_MEM_ALLOC;
     }
 
@@ -325,7 +353,9 @@ mdn_Status_t mdn_Vector_shrinkToFit(mdn_Vector_t *vector) {
     newSizeInBytes = targetCapacity * vector->elementSize;
 
     MDN_LOGGER_LOG_INFO("Shrinking to fit: vector=%p, old capacity=%zu, new capacity=%zu",
-                        (void *)vector, vector->capacity, targetCapacity);
+                        (void *)vector,
+                        vector->capacity,
+                        targetCapacity);
 
     newData = MDN_MW_realloc(vector->data, newSizeInBytes);
     if (newData == NULL) {
